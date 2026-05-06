@@ -285,7 +285,7 @@ class GenericAgentHandler(BaseHandler):
             code = self._extract_code_block(response, code_type)
             if not code: return StepOutcome("[Error] Code missing. Must use reply code block or 'script' arg.", next_prompt="\n")
         try: timeout = int(args.get("timeout", 60))
-        except: timeout = 60
+        except (ValueError, TypeError): timeout = 60
         raw_path = os.path.join(self.cwd, args.get("cwd", './'))
         cwd = os.path.normpath(os.path.abspath(raw_path))
         code_cwd = os.path.normpath(self.cwd)
