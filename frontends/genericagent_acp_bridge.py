@@ -47,7 +47,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from agentmain import GeneraticAgent
+from agentmain import GenericAgent
 
 
 JSONRPC_VERSION = "2.0"
@@ -130,7 +130,7 @@ def jsonrpc_result(req_id: Any, result: Any) -> Dict[str, Any]:
 class SessionState:
     session_id: str
     cwd: str
-    agent: GeneraticAgent
+    agent: GenericAgent
     current_prompt_id: Any = None
     prompt_lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -155,8 +155,8 @@ class GenericAgentAcpBridge:
         except Exception as e:
             eprint(f"[ACP-BRIDGE] WRITE FAILED: {type(e).__name__}: {e}")
 
-    def new_agent(self) -> GeneraticAgent:
-        agent = GeneraticAgent()
+    def new_agent(self) -> GenericAgent:
+        agent = GenericAgent()
         agent.next_llm(self.llm_no)
         agent.verbose = True
         agent.inc_out = True

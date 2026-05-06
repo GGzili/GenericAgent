@@ -331,6 +331,6 @@ class AgentChatMixin:
             self.user_tasks.pop(chat_id, None)
 
 
-from agentmain import GeneraticAgent as _GA
+from agentmain import GenericAgent as _GA
 from continue_cmd import handle_frontend_command as _handle_continue_frontend, install as _install_continue, reset_conversation as _reset_conversation
 _install_continue(_GA)

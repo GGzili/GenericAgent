@@ -39,7 +39,7 @@ def get_system_prompt():
     prompt += get_global_memory()
     return prompt
 
-class GeneraticAgent:
+class GenericAgent:
     def __init__(self):
         os.makedirs(os.path.join(script_dir, 'temp'), exist_ok=True)
         self.lock = threading.Lock()
@@ -55,7 +55,7 @@ class GeneraticAgent:
         mykeys, changed = reload_mykeys()
         if not changed and hasattr(self, 'llmclients'): return
         try: oldhistory = self.llmclient.backend.history
-        except: oldhistory = None
+        except Exception: oldhistory = None
         llm_sessions = []
         for k, cfg in mykeys.items():
             if not any(x in k for x in ['api', 'config', 'cookie']): continue
@@ -65,7 +65,7 @@ class GeneraticAgent:
                 elif 'claude' in k: llm_sessions += [ToolClient(ClaudeSession(cfg=cfg))]
                 elif 'oai' in k: llm_sessions += [ToolClient(LLMSession(cfg=cfg))]
                 elif 'mixin' in k: llm_sessions += [{'mixin_cfg': cfg}]
-            except: pass
+            except Exception as e: print(f'[WARN] Failed to init session for key "{k}": {e}')
         for i, s in enumerate(llm_sessions):
             if isinstance(s, dict) and 'mixin_cfg' in s:
                 try:
@@ -83,7 +83,7 @@ class GeneraticAgent:
         lastc = self.llmclient
         self.llmclient = self.llmclients[self.llm_no]
         try: self.llmclient.backend.history = lastc.backend.history
-        except: raise Exception('[ERROR] BAD Mixin config: Check your mykey.py')
+        except Exception: raise Exception('[ERROR] BAD Mixin config: Check your mykey.py')
         self.llmclient.last_tools = ''
         name = self.get_llm_name(model=True)
         if 'glm' in name or 'minimax' in name or 'kimi' in name: load_tool_schema('_cn')
@@ -192,7 +192,7 @@ if __name__ == '__main__':
             stderr=open(os.path.join(d, 'stderr.log'), 'w', encoding='utf-8'))
         print(p.pid); sys.exit(0)
 
-    agent = GeneraticAgent()
+    agent = GenericAgent()
     agent.next_llm(args.llm_no)
     agent.verbose = args.verbose
     threading.Thread(target=agent.run, daemon=True).start()

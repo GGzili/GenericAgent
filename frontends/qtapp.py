@@ -28,7 +28,7 @@ from PySide6.QtGui import (
 )
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from agentmain import GeneraticAgent
+from agentmain import GenericAgent
 from chatapp_common import FILE_HINT, HELP_TEXT, clean_reply, build_done_text, format_restore
 
 
@@ -2424,7 +2424,7 @@ def main():
     app.setFont(font)
 
     # ── Agent initialisation ──────────────────────────────
-    agent = GeneraticAgent()
+    agent = GenericAgent()
     if agent.llmclient is None:
         QMessageBox.critical(
             None,
