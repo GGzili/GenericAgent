@@ -1349,11 +1349,25 @@ def main():
             print(f"  {C['cyan']}  平台 {i} ({p['name']}):{C['reset']}  python {p['file']}")
     print()
 
-    # pip 依赖提示
+    # pip 依赖提示 → 交给 scripts/post_install.py 自动检测+安装
     all_deps = sorted(platform_deps)
     if all_deps:
-        print(f"  {C['yellow']}💡 提示：你需要安装以下依赖以使消息平台正常工作:{C['reset']}")
-        print(f"     {C['cyan']}pip install {' '.join(all_deps)}{C['reset']}")
+        print(f"  {C['yellow']}💡 提示：消息平台需要以下额外依赖:{C['reset']}")
+        print(f"     {C['cyan']}{' '.join(all_deps)}{C['reset']}")
+        post_install = os.path.join(PROJECT_ROOT, 'scripts', 'post_install.py')
+        if os.path.exists(post_install) and sys.stdin.isatty():
+            try:
+                import subprocess
+                subprocess.run(
+                    [sys.executable, post_install],
+                    cwd=PROJECT_ROOT,
+                    check=False,
+                )
+            except Exception as exc:
+                print(f"  {C['yellow']}⚠ post_install 启动失败: {exc}{C['reset']}")
+                print(f"     {C['cyan']}手动安装: pip install {' '.join(all_deps)}{C['reset']}")
+        else:
+            print(f"     {C['cyan']}手动安装: pip install {' '.join(all_deps)}{C['reset']}")
         print()
 
     # ── 入门示例 ──
