@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lint tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff
+
+      - name: Syntax check (compile) — repo scripts + assets only
+        run: |
+          python -m compileall -q scripts assets
+
+      - name: Ruff (warn-only, doesn't fail the job yet)
+        continue-on-error: true
+        run: |
+          ruff check scripts assets || true
+
+  lint-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Shellcheck (only files we ship in the repo)
+        run: |
+          if ls scripts/*.sh >/dev/null 2>&1; then
+            shellcheck -x scripts/*.sh
+          else
+            echo "No shell scripts in scripts/ to check."
+          fi
+
+  test-post-install:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run post_install.py against an empty mykey.py (non-interactive)
+        shell: bash
+        env:
+          GA_POST_INSTALL_NONINTERACTIVE: "1"
+        run: |
+          # Empty mykey.py → no platforms enabled → should exit 0 with guidance.
+          printf "" > mykey.py
+          python scripts/post_install.py
+
+      - name: Run post_install.py with a mock Telegram config
+        shell: bash
+        env:
+          GA_POST_INSTALL_NONINTERACTIVE: "1"
+        run: |
+          cat > mykey.py <<'PY'
+          tg_bot_token = "FAKE"
+          tg_allowed_users = [1]
+          PY
+          # Without the `telegram` package, the script should detect a missing
+          # dep and report it, but stay non-interactive and exit 0.
+          python scripts/post_install.py
+
+      - name: Cleanup mykey.py
+        if: always()
+        shell: bash
+        run: rm -f mykey.py
+
+  smoke-developer-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install uv
+
+      - name: Editable install (".[ui]" is heavy; install core only here)
+        run: |
+          uv venv
+          # shellcheck disable=SC1091
+          . .venv/bin/activate
+          uv pip install -e .
+          python -c "import agent_loop; print('agent_loop OK')"
