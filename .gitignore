@@ -72,6 +72,10 @@ memory/L4_raw_sessions/*
 !memory/skill_search/
 !memory/skill_search/**
 
+# MinerU document parsing (SOP + helper)
+!memory/mineru_sop.md
+!memory/mineru.py
+
 
 # ADB UI tool
 !memory/adb_ui.py
